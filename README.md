@@ -25,6 +25,7 @@ RenewCommunity/
 │       ├── service/    # 业务逻辑
 │       └── model/      # DTO / VO
 ├── admin/              # Vue 3 管理端
+├── uniapp/             # uni-app 小程序端（微信小程序 + H5）
 └── pom.xml
 ```
 
@@ -47,6 +48,22 @@ pnpm dev
 
 访问 `http://localhost:9527`，开发环境默认账号：`admin / 123456`。
 
+### 小程序端
+
+```bash
+cd uniapp
+pnpm install
+
+# H5 调试（端口 5173，/api 代理到 8080）
+pnpm dev:h5
+
+# 微信小程序
+pnpm dev:mp-weixin
+# 用微信开发者工具导入 uniapp/dist/dev/mp-weixin
+```
+
+小程序端说明：在 `src/manifest.json` 中填写自己的微信 AppID；本地调试需在微信开发者工具中勾选"不校验合法域名"；真机调试或上线时需将后端部署为 HTTPS 域名并在小程序后台配置 request 合法域名。
+
 数据库与 Redis 连接可通过环境变量覆盖：
 
 ```bash
@@ -63,6 +80,7 @@ REDIS_PASSWORD=
 - [x] 统一响应、全局异常、参数校验
 - [x] Sa-Token 登录认证、路由拦截与角色权限
 - [x] 管理端登录接入（请求拦截器、`satoken` 鉴权头、登录失效处理）
+- [x] 小程序端工程（uni-app + Vue3 + TS），支持微信小程序与 H5，已接入登录
 - [ ] 用户 / 角色 / 菜单权限与动态路由
 - [ ] 小区、楼栋、项目、参建单位管理
 - [ ] 资料分类、资料台账、版本管理与文件上传

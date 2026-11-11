@@ -38,3 +38,9 @@ admin/dist/
 admin/.vite/
 admin/.env.local
 admin/.eslintcache
+
+### Uniapp ###
+uniapp/node_modules/
+uniapp/dist/
+uniapp/.hbuilderx/
+uniapp/.env.local
