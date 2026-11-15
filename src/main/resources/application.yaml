@@ -6,6 +6,10 @@ spring:
     name: RenewCommunity
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -27,16 +31,18 @@ sa-token:
   is-log: false
 
 app:
-  security:
-    # 引导管理员账号，接入用户表后删除
-    username: ${ADMIN_USERNAME:admin}
-    password: ${ADMIN_PASSWORD:123456}
-    nickname: 管理员
-    roles:
-      - R_SUPER
   cors:
     allowed-origins:
       - http://localhost:9527
+      # uni-app H5 开发服务器
+      - http://localhost:5173
+  wechat:
+    # 微信小程序登录必需；未配置时微信登录接口会返回业务错误
+    app-id: ${WECHAT_APP_ID:}
+    secret: ${WECHAT_SECRET:}
+  file:
+    # 资料台账的文件存储目录，默认为 ~/renewcommunity/uploads
+    storage-path: ${FILE_STORAGE_PATH:}
 
 logging:
   level:

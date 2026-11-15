@@ -229,7 +229,18 @@ const local: App.I18n.Schema = {
     404: 'Page Not Found',
     500: 'Server Error',
     'iframe-page': 'Iframe',
-    home: 'Home'
+    home: 'Home',
+    system: 'System',
+    system_user: 'Users',
+    system_role: 'Roles',
+    system_menu: 'Menus',
+    system_monitor: 'Server Monitor',
+    project: 'Projects',
+    complaint: 'Complaints',
+    fund: 'Funds',
+    community: 'Communities',
+    announcement: 'Announcements',
+    document: 'Documents'
   },
   page: {
     login: {

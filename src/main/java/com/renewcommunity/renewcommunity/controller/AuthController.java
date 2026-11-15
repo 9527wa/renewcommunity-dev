@@ -2,6 +2,8 @@ package com.renewcommunity.renewcommunity.controller;
 
 import com.renewcommunity.renewcommunity.common.api.Result;
 import com.renewcommunity.renewcommunity.model.dto.LoginRequest;
+import com.renewcommunity.renewcommunity.model.dto.RegisterRequest;
+import com.renewcommunity.renewcommunity.model.dto.WechatLoginRequest;
 import com.renewcommunity.renewcommunity.model.vo.LoginTokenVO;
 import com.renewcommunity.renewcommunity.model.vo.UserInfoVO;
 import com.renewcommunity.renewcommunity.service.AuthService;
@@ -29,6 +31,22 @@ public class AuthController {
     @PostMapping("/login")
     public Result<LoginTokenVO> login(@Valid @RequestBody LoginRequest request) {
         return Result.ok(authService.login(request));
+    }
+
+    /**
+     * 小程序账号注册。
+     */
+    @PostMapping("/register")
+    public Result<LoginTokenVO> register(@Valid @RequestBody RegisterRequest request) {
+        return Result.ok(authService.register(request));
+    }
+
+    /**
+     * 微信小程序登录。
+     */
+    @PostMapping("/wechat-login")
+    public Result<LoginTokenVO> wechatLogin(@Valid @RequestBody WechatLoginRequest request) {
+        return Result.ok(authService.wechatLogin(request));
     }
 
     /**

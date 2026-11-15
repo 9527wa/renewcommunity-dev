@@ -40,6 +40,61 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'announcement',
+    path: '/announcement',
+    component: 'layout.base$view.announcement',
+    meta: {
+      title: 'announcement',
+      i18nKey: 'route.announcement',
+      icon: 'mdi:bullhorn',
+      order: 7
+    }
+  },
+  {
+    name: 'community',
+    path: '/community',
+    component: 'layout.base$view.community',
+    meta: {
+      title: 'community',
+      i18nKey: 'route.community',
+      icon: 'mdi:home-city',
+      order: 6
+    }
+  },
+  {
+    name: 'complaint',
+    path: '/complaint',
+    component: 'layout.base$view.complaint',
+    meta: {
+      title: 'complaint',
+      i18nKey: 'route.complaint',
+      icon: 'mdi:message-alert',
+      order: 4
+    }
+  },
+  {
+    name: 'document',
+    path: '/document',
+    component: 'layout.base$view.document',
+    meta: {
+      title: 'document',
+      i18nKey: 'route.document',
+      icon: 'mdi:folder-text',
+      order: 8
+    }
+  },
+  {
+    name: 'fund',
+    path: '/fund',
+    component: 'layout.base$view.fund',
+    meta: {
+      title: 'fund',
+      i18nKey: 'route.fund',
+      icon: 'mdi:cash-multiple',
+      order: 5
+    }
+  },
+  {
     name: 'home',
     path: '/home',
     component: 'layout.base$view.home',
@@ -74,5 +129,73 @@ export const generatedRoutes: GeneratedRoute[] = [
       constant: true,
       hideInMenu: true
     }
+  },
+  {
+    name: 'project',
+    path: '/project',
+    component: 'layout.base$view.project',
+    meta: {
+      title: 'project',
+      i18nKey: 'route.project',
+      icon: 'mdi:office-building',
+      order: 3
+    }
+  },
+  {
+    name: 'system',
+    path: '/system',
+    component: 'layout.base',
+    meta: {
+      title: 'system',
+      i18nKey: 'route.system',
+      icon: 'mdi:cog',
+      order: 2
+    },
+    children: [
+      {
+        name: 'system_menu',
+        path: '/system/menu',
+        component: 'view.system_menu',
+        meta: {
+          title: 'system_menu',
+          i18nKey: 'route.system_menu',
+          icon: 'mdi:menu',
+          order: 3
+        }
+      },
+      {
+        name: 'system_monitor',
+        path: '/system/monitor',
+        component: 'view.system_monitor',
+        meta: {
+          title: 'system_monitor',
+          i18nKey: 'route.system_monitor',
+          icon: 'mdi:server',
+          order: 4
+        }
+      },
+      {
+        name: 'system_role',
+        path: '/system/role',
+        component: 'view.system_role',
+        meta: {
+          title: 'system_role',
+          i18nKey: 'route.system_role',
+          icon: 'mdi:account-group',
+          order: 2
+        }
+      },
+      {
+        name: 'system_user',
+        path: '/system/user',
+        component: 'view.system_user',
+        meta: {
+          title: 'system_user',
+          i18nKey: 'route.system_user',
+          icon: 'mdi:account',
+          order: 1
+        }
+      }
+    ]
   }
 ];

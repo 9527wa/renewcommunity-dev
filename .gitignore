@@ -38,9 +38,18 @@ admin/dist/
 admin/.vite/
 admin/.env.local
 admin/.eslintcache
+.pnpm-store/
+
+### Build config of admin is part of the source ###
+!admin/build/
 
 ### Uniapp ###
 uniapp/node_modules/
 uniapp/dist/
 uniapp/.hbuilderx/
 uniapp/.env.local
+
+### macOS & editor ###
+.DS_Store
+.openidea/
+admin/.vite-hooks/

@@ -3,13 +3,58 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "资料台账"
+        "navigationBarTitleText": "资料台账",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/register/register",
+      "style": {
+        "navigationBarTitleText": "注册账号"
+      }
+    },
+    {
+      "path": "pages/complaint/index",
+      "style": {
+        "navigationBarTitleText": "投诉建议",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/announcement/list",
+      "style": {
+        "navigationBarTitleText": "公告通知"
+      }
+    },
+    {
+      "path": "pages/announcement/detail",
+      "style": {
+        "navigationBarTitleText": "公告详情"
+      }
+    },
+    {
+      "path": "pages/project/list",
+      "style": {
+        "navigationBarTitleText": "改造项目"
+      }
+    },
+    {
+      "path": "pages/project/detail",
+      "style": {
+        "navigationBarTitleText": "项目详情"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
       }
     }
   ],
