@@ -18,6 +18,12 @@ public record AppComplaintSubmitRequest(
         @Size(max = 30, message = "投诉类型长度不能超过 30")
         String type,
 
+        @Size(max = 20, message = "事项类型长度不能超过 20")
+        String kind,
+
+        @Size(max = 200, message = "问题位置长度不能超过 200")
+        String location,
+
         Long projectId,
 
         @Size(max = 100, message = "所属小区长度不能超过 100")

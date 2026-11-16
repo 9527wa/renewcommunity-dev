@@ -1,6 +1,7 @@
 package com.renewcommunity.renewcommunity.model.vo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 投诉列表项。
@@ -11,6 +12,7 @@ public record ComplaintVO(
         String content,
         String community,
         String type,
+        String kind,
         Integer status,
         Long projectId,
         String projectName,
@@ -18,6 +20,10 @@ public record ComplaintVO(
         String contactMobile,
         String reply,
         LocalDateTime handledAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<FileRefVO> images,
+        String location,
+        Integer remindCount,
+        String orderNo
 ) {
 }

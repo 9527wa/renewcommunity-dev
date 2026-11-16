@@ -4,6 +4,7 @@ import com.renewcommunity.renewcommunity.common.api.PageResult;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementDetailVO;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementVO;
 import com.renewcommunity.renewcommunity.model.vo.AppCommunityVO;
+import com.renewcommunity.renewcommunity.model.vo.AppProgressVO;
 import com.renewcommunity.renewcommunity.model.vo.AppProjectVO;
 
 import java.util.List;
@@ -13,13 +14,16 @@ import java.util.List;
  */
 public interface AppContentService {
 
-    PageResult<AppAnnouncementVO> listAnnouncements(int pageNum, int pageSize);
+    PageResult<AppAnnouncementVO> listAnnouncements(String keyword, int pageNum, int pageSize);
 
     AppAnnouncementDetailVO getAnnouncement(Long id);
 
-    PageResult<AppProjectVO> listProjects(Integer status, String community, int pageNum, int pageSize);
+    PageResult<AppProjectVO> listProjects(Integer status, String community, String keyword, int pageNum,
+                                         int pageSize);
 
     AppProjectVO getProject(Long id);
+
+    PageResult<AppProgressVO> listProjectProgress(Long projectId, int pageNum, int pageSize);
 
     List<AppCommunityVO> listCommunities();
 }

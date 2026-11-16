@@ -1,33 +1,53 @@
 <template>
   <view class="page">
     <view class="hero">
-      <text class="hero-title">投诉建议</text>
-      <text class="hero-sub">提交小区问题反馈，查看处理进度</text>
+      <view class="hero-top">
+        <view>
+          <text class="hero-title">投诉建议</text>
+          <text class="hero-sub">反映小区管理问题、提出建议意见或政策咨询</text>
+        </view>
+        <text class="hero-link" @click="goMyComplaints">我的投诉 ›</text>
+      </view>
     </view>
 
     <view class="content">
       <view class="card">
         <view class="card-head">
-          <text class="card-title">提交投诉</text>
+          <image class="head-icon" src="/static/home/icon-chat.png" mode="aspectFit" />
+          <view class="head-text">
+            <text class="card-title">提交投诉建议</text>
+            <text class="card-sub">请如实填写，便于工作人员与您核实办理</text>
+          </view>
         </view>
 
         <view class="form-item">
-          <text class="label">投诉标题</text>
-          <input v-model="form.title" class="input" maxlength="100" placeholder="请输入投诉标题" />
+          <text class="label"><text class="required">*</text>诉求类型</text>
+          <view class="kind-tabs">
+            <view
+              v-for="item in kinds"
+              :key="item.label"
+              class="kind-tab"
+              :class="{ active: form.kind === item.label }"
+              @click="form.kind = item.label"
+            >
+              <image class="kind-icon" :src="item.icon" mode="aspectFit" />
+              <text class="kind-label">{{ item.label }}</text>
+            </view>
+          </view>
         </view>
 
         <view class="form-item">
-          <text class="label">投诉类型</text>
-          <picker :range="typeOptions" @change="onTypeChange">
+          <text class="label"><text class="required">*</text>所属小区</text>
+          <picker :range="communityNames" @change="onCommunityChange">
             <view class="picker">
-              <text>{{ form.type }}</text>
+              <text>{{ form.community || '请选择小区' }}</text>
               <text class="picker-arrow">›</text>
             </view>
           </picker>
         </view>
 
         <view class="form-item">
-          <text class="label">关联项目</text>
+          <text class="label">关联项目（可选）</text>
           <picker :range="projectLabels" @change="onProjectChange">
             <view class="picker">
               <text>{{ projectLabel }}</text>
@@ -37,45 +57,64 @@
         </view>
 
         <view class="form-item">
-          <text class="label">投诉内容</text>
-          <textarea v-model="form.content" class="textarea" maxlength="1000" placeholder="请详细描述遇到的问题" />
+          <text class="label"><text class="required">*</text>问题位置</text>
+          <input v-model="form.location" class="input" maxlength="200" placeholder="如 3 号楼 2 单元楼道" />
         </view>
 
         <view class="form-item">
-          <text class="label">联系人</text>
-          <input v-model="form.contactName" class="input" maxlength="50" placeholder="选填，默认使用账号昵称" />
+          <text class="label"><text class="required">*</text>诉求标题</text>
+          <input v-model="form.title" class="input" maxlength="100" placeholder="请简要描述您的诉求" />
         </view>
 
         <view class="form-item">
-          <text class="label">联系电话</text>
-          <input v-model="form.contactMobile" class="input" type="number" maxlength="20" placeholder="选填" />
+          <text class="label"><text class="required">*</text>问题描述</text>
+          <textarea
+            v-model="form.content"
+            class="textarea"
+            maxlength="500"
+            placeholder="请详细描述问题情况，便于工作人员核实处理"
+          />
+          <text class="counter">{{ form.content.length }}/500</text>
+        </view>
+
+        <view class="form-item">
+          <text class="label"><text class="required">*</text>联系电话</text>
+          <input
+            v-model="form.contactMobile"
+            class="input"
+            type="number"
+            maxlength="20"
+            placeholder="请输入联系电话"
+          />
+        </view>
+
+        <view class="form-item">
+          <view class="label-row">
+            <text class="label">上传现场图片</text>
+            <text class="label-tip">最多上传 9 张</text>
+          </view>
+          <view class="photo-grid">
+            <view v-for="(photo, index) in images" :key="photo" class="photo-item">
+              <image class="photo" :src="photo" mode="aspectFill" @click="previewImage(index)" />
+              <text class="photo-remove" @click="removeImage(index)">×</text>
+            </view>
+            <view v-if="images.length < 9" class="photo-add" @click="chooseImages">
+              <text class="photo-add-icon">＋</text>
+              <text class="photo-add-text">上传图片</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="tip-box">
+          <text class="tip-icon">i</text>
+          <text class="tip-text">
+            温馨提示：请如实填写诉求内容，客观描述问题情况，并保持联系电话畅通，以便工作人员及时与您核实、办理反馈。
+          </text>
         </view>
 
         <button class="submit-btn" :loading="submitting" :disabled="submitting" @click="handleSubmit">
-          提交投诉
+          提交诉求
         </button>
-      </view>
-
-      <view class="card">
-        <view class="card-head">
-          <text class="card-title">我的投诉</text>
-          <text class="refresh" @click="loadMyComplaints">刷新</text>
-        </view>
-
-        <view v-for="item in complaints" :key="item.id" class="complaint">
-          <view class="complaint-head">
-            <text class="complaint-title">{{ item.title }}</text>
-            <text class="status" :class="statusClass(item.status)">{{ statusText(item.status) }}</text>
-          </view>
-          <text class="complaint-desc">{{ item.content }}</text>
-          <view class="meta">
-            <text>{{ item.projectName || '未关联项目' }}</text>
-            <text>{{ formatDate(item.createdAt) }}</text>
-          </view>
-          <view v-if="item.reply" class="reply">处理回复：{{ item.reply }}</view>
-        </view>
-
-        <view v-if="!complaints.length && !loading" class="empty">暂无投诉记录</view>
       </view>
     </view>
 
@@ -86,8 +125,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import { fetchMyComplaints, fetchProjectList, submitComplaint } from '@/api/app';
-import type { AppComplaint, AppProject } from '@/api/app';
+import {
+  fetchCommunityList,
+  fetchProfile,
+  fetchProjectList,
+  submitComplaint,
+  uploadComplaintImage
+} from '@/api/app';
+import type { AppCommunity, AppProfile, AppProject } from '@/api/app';
 import TabBar from '@/components/tab-bar/tab-bar.vue';
 import { clearToken, isLoggedIn } from '@/utils/auth';
 
@@ -97,23 +142,30 @@ interface PickerEvent {
   };
 }
 
-const typeOptions = ['施工扰民', '环境秩序', '物业维修', '安全隐患', '其他'];
+const kinds = [
+  { label: '投诉', icon: '/static/home/icon-chat.png' },
+  { label: '建议', icon: '/static/home/icon-clipboard.png' },
+  { label: '咨询', icon: '/static/home/icon-docsearch.png' }
+];
 
 const form = reactive({
+  kind: '投诉',
+  community: '',
+  projectId: null as number | null,
+  location: '',
   title: '',
   content: '',
-  type: '其他',
-  projectId: null as number | null,
-  community: '',
-  contactName: '',
   contactMobile: ''
 });
 
+const profile = ref<AppProfile | null>(null);
+const communities = ref<AppCommunity[]>([]);
 const projects = ref<AppProject[]>([]);
-const complaints = ref<AppComplaint[]>([]);
+const images = ref<string[]>([]);
 const submitting = ref(false);
-const loading = ref(false);
 let pendingProjectId: number | null = null;
+
+const communityNames = computed(() => communities.value.map(item => item.name));
 
 const projectChoices = computed(() => [
   { id: 0, name: '不关联项目', community: '' },
@@ -121,41 +173,52 @@ const projectChoices = computed(() => [
 ]);
 
 const projectLabels = computed(() => projectChoices.value.map(item => item.name));
-
 const projectLabel = computed(
   () => projectChoices.value.find(item => item.id === (form.projectId ?? 0))?.name ?? '不关联项目'
 );
 
-function statusText(status: number) {
-  if (status === 0) {
-    return '待处理';
-  }
-
-  if (status === 1) {
-    return '处理中';
-  }
-
-  return '已办结';
+function redirectToLogin() {
+  clearToken();
+  uni.reLaunch({ url: '/pages/login/login' });
 }
 
-function statusClass(status: number) {
-  if (status === 0) {
-    return 'status-pending';
-  }
+async function loadBaseData() {
+  try {
+    const [profileData, communityList, projectPage] = await Promise.all([
+      fetchProfile(),
+      fetchCommunityList(),
+      fetchProjectList({ pageNum: 1, pageSize: 100 })
+    ]);
 
-  if (status === 1) {
-    return 'status-processing';
-  }
+    profile.value = profileData;
+    communities.value = communityList;
+    projects.value = projectPage.list;
 
-  return 'status-done';
+    if (!form.community) {
+      form.community = profileData.communityName || '';
+    }
+
+    if (!form.contactMobile) {
+      form.contactMobile = profileData.mobile || '';
+    }
+
+    if (pendingProjectId) {
+      const target = projects.value.find(item => item.id === pendingProjectId);
+
+      if (target) {
+        form.projectId = target.id;
+        form.community = target.community || form.community;
+      }
+
+      pendingProjectId = null;
+    }
+  } catch {
+    // 错误提示由 request 统一处理
+  }
 }
 
-function formatDate(value?: string | null) {
-  return value ? value.replace('T', ' ').slice(0, 16) : '';
-}
-
-function onTypeChange(event: PickerEvent) {
-  form.type = typeOptions[Number(event.detail.value)] ?? '其他';
+function onCommunityChange(event: PickerEvent) {
+  form.community = communityNames.value[Number(event.detail.value)] ?? '';
 }
 
 function onProjectChange(event: PickerEvent) {
@@ -166,65 +229,102 @@ function onProjectChange(event: PickerEvent) {
   }
 
   form.projectId = choice.id || null;
-  form.community = choice.community || '';
-}
 
-async function loadProjects() {
-  try {
-    const page = await fetchProjectList({ pageNum: 1, pageSize: 100 });
-    projects.value = page.list;
-  } catch {
-    // 错误提示由 request 统一处理
+  if (!form.community && choice.community) {
+    form.community = choice.community;
   }
 }
 
-async function loadMyComplaints() {
-  if (loading.value) {
+function chooseImages() {
+  const remaining = 9 - images.value.length;
+
+  if (remaining <= 0) {
     return;
   }
 
-  loading.value = true;
+  uni.chooseImage({
+    count: remaining,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: res => {
+      images.value = [...images.value, ...res.tempFilePaths.slice(0, remaining)];
+    }
+  });
+}
 
-  try {
-    const page = await fetchMyComplaints({ pageNum: 1, pageSize: 20 });
-    complaints.value = page.list;
-  } catch {
-    // 错误提示由 request 统一处理
-  } finally {
-    loading.value = false;
-  }
+function removeImage(index: number) {
+  images.value = images.value.filter((_, i) => i !== index);
+}
+
+function previewImage(index: number) {
+  uni.previewImage({ urls: images.value, current: images.value[index] });
+}
+
+function goMyComplaints() {
+  uni.navigateTo({ url: '/pages/complaint/my' });
 }
 
 async function handleSubmit() {
+  if (!form.community) {
+    uni.showToast({ title: '请选择所属小区', icon: 'none' });
+    return;
+  }
+
+  if (!form.location.trim()) {
+    uni.showToast({ title: '请输入问题位置', icon: 'none' });
+    return;
+  }
+
   if (!form.title.trim()) {
-    uni.showToast({ title: '请输入投诉标题', icon: 'none' });
+    uni.showToast({ title: '请输入诉求标题', icon: 'none' });
     return;
   }
 
   if (!form.content.trim()) {
-    uni.showToast({ title: '请输入投诉内容', icon: 'none' });
+    uni.showToast({ title: '请输入问题描述', icon: 'none' });
+    return;
+  }
+
+  if (!form.contactMobile.trim()) {
+    uni.showToast({ title: '请输入联系电话', icon: 'none' });
     return;
   }
 
   submitting.value = true;
 
   try {
-    await submitComplaint({
+    const complaintId = await submitComplaint({
       title: form.title.trim(),
       content: form.content.trim(),
-      type: form.type,
+      kind: form.kind,
+      type: '其他',
+      location: form.location.trim(),
       projectId: form.projectId,
-      community: form.community || undefined,
-      contactName: form.contactName.trim() || undefined,
-      contactMobile: form.contactMobile.trim() || undefined
+      community: form.community,
+      contactName: profile.value?.userName,
+      contactMobile: form.contactMobile.trim()
     });
 
-    uni.showToast({ title: '提交成功', icon: 'success' });
+    let uploadFailed = false;
+
+    for (const path of images.value) {
+      try {
+        await uploadComplaintImage(complaintId, path);
+      } catch {
+        uploadFailed = true;
+      }
+    }
+
+    uni.showToast({
+      title: uploadFailed ? '诉求已提交，部分图片上传失败' : '提交成功',
+      icon: uploadFailed ? 'none' : 'success'
+    });
+
     form.title = '';
     form.content = '';
-    form.contactName = '';
-    form.contactMobile = '';
-    await loadMyComplaints();
+    form.location = '';
+    images.value = [];
+    await loadBaseData();
   } catch {
     // 错误提示由 request 统一处理
   } finally {
@@ -232,39 +332,17 @@ async function handleSubmit() {
   }
 }
 
-function redirectToLogin() {
-  clearToken();
-  uni.reLaunch({ url: '/pages/login/login' });
-}
-
 onLoad(options => {
-  const projectId = Number(options?.projectId);
-
-  if (projectId) {
-    pendingProjectId = projectId;
-  }
+  pendingProjectId = Number(options?.projectId) || null;
 });
 
-onShow(async () => {
+onShow(() => {
   if (!isLoggedIn()) {
     redirectToLogin();
     return;
   }
 
-  await loadProjects();
-
-  if (pendingProjectId) {
-    const target = projects.value.find(item => item.id === pendingProjectId);
-
-    if (target) {
-      form.projectId = target.id;
-      form.community = target.community;
-    }
-
-    pendingProjectId = null;
-  }
-
-  loadMyComplaints();
+  loadBaseData();
 });
 </script>
 
@@ -276,22 +354,34 @@ onShow(async () => {
 }
 
 .hero {
-  display: flex;
-  flex-direction: column;
-  padding: calc(40rpx + var(--status-bar-height)) 36rpx 56rpx;
+  padding: calc(36rpx + var(--status-bar-height)) 32rpx 64rpx;
   background: linear-gradient(180deg, #3d92ef 0%, #5aa6f3 55%, #86c0f9 100%);
 }
 
+.hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
 .hero-title {
+  display: block;
   font-size: 40rpx;
   font-weight: 700;
   color: #ffffff;
 }
 
 .hero-sub {
-  margin-top: 12rpx;
-  font-size: 25rpx;
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
   color: rgba(255, 255, 255, 0.86);
+}
+
+.hero-link {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .content {
@@ -300,18 +390,28 @@ onShow(async () => {
 }
 
 .card {
-  margin-bottom: 24rpx;
   padding: 28rpx 24rpx;
-  background-color: #ffffff;
   border-radius: 20rpx;
+  background-color: #ffffff;
   box-shadow: 0 8rpx 24rpx rgba(31, 45, 61, 0.05);
 }
 
 .card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f1f4f8;
+}
+
+.head-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 14rpx;
+}
+
+.head-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title {
@@ -320,15 +420,16 @@ onShow(async () => {
   color: #1f2d3d;
 }
 
-.refresh {
-  font-size: 24rpx;
-  color: #1677ff;
+.card-sub {
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #9aa4b2;
 }
 
 .form-item {
   display: flex;
   flex-direction: column;
-  margin-top: 22rpx;
+  margin-top: 24rpx;
 }
 
 .label {
@@ -337,13 +438,70 @@ onShow(async () => {
   color: #48505e;
 }
 
+.required {
+  margin-right: 4rpx;
+  color: #e5484d;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label-tip {
+  font-size: 22rpx;
+  color: #9aa4b2;
+}
+
+.kind-tabs {
+  display: flex;
+}
+
+.kind-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 72rpx;
+  margin-right: 14rpx;
+  border: 2rpx solid #e4e8ef;
+  border-radius: 12rpx;
+  background-color: #f8fafc;
+}
+
+.kind-tab:last-child {
+  margin-right: 0;
+}
+
+.kind-tab.active {
+  border-color: #22a06b;
+  background-color: #e9f8ef;
+}
+
+.kind-icon {
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 8rpx;
+}
+
+.kind-label {
+  font-size: 25rpx;
+  color: #5b6472;
+}
+
+.kind-tab.active .kind-label {
+  color: #15803d;
+  font-weight: 600;
+}
+
 .input,
 .picker,
 .textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 0 22rpx;
-  font-size: 27rpx;
+  font-size: 26rpx;
   background-color: #f5f7fa;
   border: 2rpx solid #e4e8ef;
   border-radius: 12rpx;
@@ -367,103 +525,108 @@ onShow(async () => {
 }
 
 .textarea {
-  height: 200rpx;
+  height: 220rpx;
   padding: 18rpx 22rpx;
   line-height: 1.6;
 }
 
+.counter {
+  margin-top: 6rpx;
+  text-align: right;
+  font-size: 20rpx;
+  color: #9aa4b2;
+}
+
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.photo-item {
+  position: relative;
+  margin: 0 16rpx 16rpx 0;
+}
+
+.photo {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 12rpx;
+}
+
+.photo-remove {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 32rpx;
+  border-radius: 50%;
+  background-color: rgba(15, 23, 42, 0.65);
+  color: #ffffff;
+  font-size: 26rpx;
+  text-align: center;
+}
+
+.photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 150rpx;
+  height: 150rpx;
+  border: 2rpx dashed #d7dde7;
+  border-radius: 12rpx;
+  background-color: #f8fafc;
+}
+
+.photo-add-icon {
+  font-size: 36rpx;
+  color: #9aa4b2;
+}
+
+.photo-add-text {
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #9aa4b2;
+}
+
+.tip-box {
+  display: flex;
+  margin-top: 28rpx;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  background-color: #f0f7ff;
+}
+
+.tip-icon {
+  flex-shrink: 0;
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 10rpx;
+  border-radius: 50%;
+  background-color: #3b9cf7;
+  color: #ffffff;
+  font-size: 20rpx;
+  line-height: 30rpx;
+  text-align: center;
+  font-style: normal;
+}
+
+.tip-text {
+  font-size: 23rpx;
+  line-height: 1.65;
+  color: #5b7ba6;
+}
+
 .submit-btn {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  margin-top: 36rpx;
+  height: 90rpx;
+  line-height: 90rpx;
+  margin-top: 34rpx;
   font-size: 30rpx;
   color: #ffffff;
   background: linear-gradient(135deg, #3b9cf7 0%, #1677ff 100%);
-  border-radius: 44rpx;
+  border-radius: 45rpx;
   box-shadow: 0 8rpx 20rpx rgba(22, 119, 255, 0.24);
-}
-
-.complaint {
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #f1f4f8;
-}
-
-.complaint:last-child {
-  border-bottom: none;
-}
-
-.complaint-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.complaint-title {
-  flex: 1;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1f2d3d;
-}
-
-.status {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 4rpx 14rpx;
-  border-radius: 16rpx;
-  font-size: 22rpx;
-}
-
-.status-pending {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.status-processing {
-  background-color: #eaf3ff;
-  color: #1677ff;
-}
-
-.status-done {
-  background-color: #e9f8ef;
-  color: #16a34a;
-}
-
-.complaint-desc {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #8b95a4;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12rpx;
-  font-size: 22rpx;
-  color: #9aa4b2;
-}
-
-.reply {
-  margin-top: 14rpx;
-  padding: 16rpx 20rpx;
-  border-radius: 12rpx;
-  background-color: #f5f9ff;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: #1677ff;
-}
-
-.empty {
-  padding: 60rpx 0;
-  text-align: center;
-  font-size: 26rpx;
-  color: #9aa4b2;
 }
 </style>

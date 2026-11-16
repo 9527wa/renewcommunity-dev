@@ -39,6 +39,9 @@ public record ProjectSaveRequest(
         @Size(max = 50, message = "负责人长度不能超过 50")
         String manager,
 
+        @Size(max = 100, message = "施工单位长度不能超过 100")
+        String constructionUnit,
+
         @Size(max = 500, message = "项目简介长度不能超过 500")
         String description
 ) {

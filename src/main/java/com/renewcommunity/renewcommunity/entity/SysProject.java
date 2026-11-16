@@ -40,6 +40,9 @@ public class SysProject {
 
     private String manager;
 
+    /** 施工单位 */
+    private String constructionUnit;
+
     private String description;
 
     private LocalDateTime createdAt;

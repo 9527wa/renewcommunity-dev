@@ -14,6 +14,8 @@ public record AppProjectVO(
         Integer progress,
         LocalDate startDate,
         LocalDate endDate,
+        String constructionUnit,
+        String manager,
         String description
 ) {
 }

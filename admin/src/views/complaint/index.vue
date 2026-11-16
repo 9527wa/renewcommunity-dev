@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, h, onMounted, reactive, ref } from 'vue';
+import { computed, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import type { DataTableColumns, FormInst, FormRules } from 'naive-ui';
-import { NButton, NPopconfirm, NSpace, NTag } from 'naive-ui';
+import { NButton, NImage, NPopconfirm, NSpace, NTag } from 'naive-ui';
 import {
   fetchCreateComplaint,
   fetchDeleteComplaint,
+  fetchFileObjectUrl,
   fetchGetComplaintList,
   fetchGetProjectOptions,
   fetchHandleComplaint,
@@ -64,7 +65,8 @@ function formatDateTime(value?: string | null) {
 const columns = computed<DataTableColumns<Api.Business.Complaint>>(() => [
   { key: 'title', title: '投诉标题', minWidth: 190, ellipsis: { tooltip: true } },
   { key: 'community', title: '所属小区', width: 130, ellipsis: { tooltip: true } },
-  { key: 'type', title: '类型', width: 90 },
+  { key: 'kind', title: '事项', width: 80, align: 'center' },
+  { key: 'type', title: '问题类型', width: 100 },
   {
     key: 'projectName',
     title: '关联项目',
@@ -84,6 +86,20 @@ const columns = computed<DataTableColumns<Api.Business.Complaint>>(() => [
     }
   },
   { key: 'createdAt', title: '提交时间', width: 160, render: row => formatDateTime(row.createdAt) },
+  {
+    key: 'images',
+    title: '图片',
+    width: 90,
+    align: 'center',
+    render: row =>
+      row.images?.length
+        ? h(
+            NButton,
+            { size: 'small', text: true, type: 'info', onClick: () => openImages(row) },
+            () => `查看 (${row.images.length})`
+          )
+        : '-'
+  },
   {
     key: 'operate',
     title: $t('common.operate'),
@@ -184,6 +200,8 @@ const model = reactive({
   title: '',
   content: '',
   community: '',
+  location: '',
+  kind: '投诉',
   type: '其他',
   projectId: null as number | null,
   contactName: '',
@@ -200,6 +218,8 @@ function resetModel() {
   model.title = '';
   model.content = '';
   model.community = '';
+  model.location = '';
+  model.kind = '投诉';
   model.type = '其他';
   model.projectId = null;
   model.contactName = '';
@@ -217,6 +237,8 @@ function handleEdit(row: Api.Business.Complaint) {
   model.title = row.title;
   model.content = row.content;
   model.community = row.community;
+  model.location = row.location || '';
+  model.kind = row.kind || '投诉';
   model.type = row.type;
   model.projectId = row.projectId;
   model.contactName = row.contactName;
@@ -231,6 +253,8 @@ async function handleSubmit() {
     title: model.title,
     content: model.content,
     community: model.community,
+    location: model.location,
+    kind: model.kind,
     type: model.type,
     projectId: model.projectId,
     contactName: model.contactName,
@@ -300,6 +324,33 @@ async function handleHandleSubmit() {
   }
 }
 
+const imageVisible = ref(false);
+const previewImages = ref<Array<{ fileId: number; url: string; name: string }>>([]);
+
+async function openImages(row: Api.Business.Complaint) {
+  try {
+    const images = await Promise.all(
+      (row.images || []).map(async image => ({
+        fileId: image.fileId,
+        url: await fetchFileObjectUrl(image.fileId),
+        name: image.fileName || `图片${image.fileId}`
+      }))
+    );
+
+    previewImages.value = images;
+    imageVisible.value = true;
+  } catch {
+    window.$message?.error('图片加载失败');
+  }
+}
+
+function closeImages() {
+  previewImages.value.forEach(image => window.URL.revokeObjectURL(image.url));
+  previewImages.value = [];
+}
+
+onBeforeUnmount(closeImages);
+
 onMounted(() => {
   getComplaints();
   getProjects();
@@ -339,7 +390,7 @@ onMounted(() => {
           :loading="loading"
           :pagination="pagination"
           :row-key="row => row.id"
-          :scroll-x="1040"
+          :scroll-x="1230"
         />
       </NSpace>
     </NCard>
@@ -417,6 +468,21 @@ onMounted(() => {
           </NButton>
         </NSpace>
       </template>
+    </NModal>
+
+    <NModal v-model:show="imageVisible" preset="card" title="投诉图片" style="width: 720px" @after-leave="closeImages">
+      <NSpace :size="12" class="flex-wrap">
+        <NImage
+          v-for="image in previewImages"
+          :key="image.fileId"
+          :src="image.url"
+          :alt="image.name"
+          width="180"
+          object-fit="cover"
+          class="rounded-8px"
+        />
+      </NSpace>
+      <NText v-if="!previewImages.length" depth="3" class="text-sm">暂无图片</NText>
     </NModal>
   </div>
 </template>

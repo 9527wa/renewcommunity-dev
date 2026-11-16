@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,7 +61,7 @@ public class FundServiceImpl implements FundService {
                 .toList());
 
         List<FundVO> list = result.getRecords().stream()
-                .map(item -> toVO(item, projectNames.get(item.getProjectId())))
+                .map(item -> toVO(item, item.getProjectId() == null ? null : projectNames.get(item.getProjectId())))
                 .toList();
 
         return new PageResult<>(result.getTotal(), list);
@@ -117,7 +118,7 @@ public class FundServiceImpl implements FundService {
 
     private Map<Long, String> projectNameMap(Collection<Long> projectIds) {
         if (projectIds.isEmpty()) {
-            return Map.of();
+            return Collections.emptyMap();
         }
 
         return projectMapper.selectBatchIds(projectIds).stream()

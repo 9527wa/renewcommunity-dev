@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     nickname    VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '昵称',
     mobile      VARCHAR(20)           DEFAULT NULL COMMENT '手机号',
     email       VARCHAR(100)          DEFAULT NULL COMMENT '邮箱',
+    community_id BIGINT                DEFAULT NULL COMMENT '绑定小区ID',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1启用 0停用',
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -111,7 +112,23 @@ INSERT IGNORE INTO sys_menu (id, parent_id, name, type, path, component, permiss
     (100, 45, '上传资料', 'B', '', '', 'document:upload', '', 1),
     (101, 45, '下载资料', 'B', '', '', 'document:download', '', 2),
     (102, 45, '归档资料', 'B', '', '', 'document:archive', '', 3),
-    (103, 45, '删除资料', 'B', '', '', 'document:delete', '', 4);
+    (103, 45, '删除资料', 'B', '', '', 'document:delete', '', 4),
+    (104, 45, '下载文件', 'B', '', '', 'file:download', '', 5),
+    (46, 0, '工程进度', 'C', '/progress', 'progress', 'progress:list', 'mdi:chart-timeline-variant', 26),
+    (110, 46, '上报进度', 'B', '', '', 'progress:add', '', 1),
+    (111, 46, '修改进度', 'B', '', '', 'progress:edit', '', 2),
+    (112, 46, '删除进度', 'B', '', '', 'progress:delete', '', 3),
+    (47, 0, '项目验收', 'C', '/acceptance', 'acceptance', 'acceptance:list', 'mdi:clipboard-check', 27),
+    (120, 47, '登记验收', 'B', '', '', 'acceptance:add', '', 1),
+    (121, 47, '修改验收', 'B', '', '', 'acceptance:edit', '', 2),
+    (122, 47, '删除验收', 'B', '', '', 'acceptance:delete', '', 3),
+    (48, 0, '满意度管理', 'C', '/satisfaction', 'satisfaction', 'satisfaction:list', 'mdi:emoticon-happy-outline', 28),
+    (49, 0, '居民用户', 'C', '/resident', 'resident', 'resident:list', 'mdi:account-multiple', 29),
+    (130, 49, '绑定小区', 'B', '', '', 'resident:bind', '', 1),
+    (53, 0, '统计分析', 'C', '/statistics', 'statistics', 'statistics:view', 'mdi:chart-box-outline', 30),
+    (54, 0, '文件管理', 'C', '/file', 'file', 'file:list', 'mdi:folder-multiple', 31),
+    (140, 54, '删除文件', 'B', '', '', 'file:delete', '', 1),
+    (55, 0, '操作日志', 'C', '/log', 'log', 'log:list', 'mdi:history', 32);
 
 -- 初始化管理员账号：admin / 123456
 INSERT IGNORE INTO sys_user (id, username, password, nickname, status) VALUES

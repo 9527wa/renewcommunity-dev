@@ -4,7 +4,8 @@
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "资料台账",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
       }
     },
     {
@@ -23,13 +24,40 @@
       "path": "pages/complaint/index",
       "style": {
         "navigationBarTitleText": "投诉建议",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/complaint/my",
+      "style": {
+        "navigationBarTitleText": "我的投诉",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/complaint/detail",
+      "style": {
+        "navigationBarTitleText": "投诉详情"
+      }
+    },
+    {
+      "path": "pages/profile/settings",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/profile/ratings",
+      "style": {
+        "navigationBarTitleText": "我的评价"
       }
     },
     {
       "path": "pages/announcement/list",
       "style": {
-        "navigationBarTitleText": "公告通知"
+        "navigationBarTitleText": "公告通知",
+        "enablePullDownRefresh": true
       }
     },
     {
@@ -41,7 +69,8 @@
     {
       "path": "pages/project/list",
       "style": {
-        "navigationBarTitleText": "改造项目"
+        "navigationBarTitleText": "改造项目",
+        "enablePullDownRefresh": true
       }
     },
     {

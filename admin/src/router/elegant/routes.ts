@@ -40,6 +40,17 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'acceptance',
+    path: '/acceptance',
+    component: 'layout.base$view.acceptance',
+    meta: {
+      title: 'acceptance',
+      i18nKey: 'route.acceptance',
+      icon: 'mdi:clipboard-check',
+      order: 10
+    }
+  },
+  {
     name: 'announcement',
     path: '/announcement',
     component: 'layout.base$view.announcement',
@@ -84,6 +95,17 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'file',
+    path: '/file',
+    component: 'layout.base$view.file',
+    meta: {
+      title: 'file',
+      i18nKey: 'route.file',
+      icon: 'mdi:folder-multiple',
+      order: 14
+    }
+  },
+  {
     name: 'fund',
     path: '/fund',
     component: 'layout.base$view.fund',
@@ -119,6 +141,17 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'log',
+    path: '/log',
+    component: 'layout.base$view.log',
+    meta: {
+      title: 'log',
+      i18nKey: 'route.log',
+      icon: 'mdi:history',
+      order: 15
+    }
+  },
+  {
     name: 'login',
     path: '/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?',
     component: 'layout.blank$view.login',
@@ -131,6 +164,17 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'progress',
+    path: '/progress',
+    component: 'layout.base$view.progress',
+    meta: {
+      title: 'progress',
+      i18nKey: 'route.progress',
+      icon: 'mdi:chart-timeline-variant',
+      order: 9
+    }
+  },
+  {
     name: 'project',
     path: '/project',
     component: 'layout.base$view.project',
@@ -139,6 +183,39 @@ export const generatedRoutes: GeneratedRoute[] = [
       i18nKey: 'route.project',
       icon: 'mdi:office-building',
       order: 3
+    }
+  },
+  {
+    name: 'resident',
+    path: '/resident',
+    component: 'layout.base$view.resident',
+    meta: {
+      title: 'resident',
+      i18nKey: 'route.resident',
+      icon: 'mdi:account-multiple',
+      order: 12
+    }
+  },
+  {
+    name: 'satisfaction',
+    path: '/satisfaction',
+    component: 'layout.base$view.satisfaction',
+    meta: {
+      title: 'satisfaction',
+      i18nKey: 'route.satisfaction',
+      icon: 'mdi:emoticon-happy-outline',
+      order: 11
+    }
+  },
+  {
+    name: 'statistics',
+    path: '/statistics',
+    component: 'layout.base$view.statistics',
+    meta: {
+      title: 'statistics',
+      i18nKey: 'route.statistics',
+      icon: 'mdi:chart-box-outline',
+      order: 13
     }
   },
   {

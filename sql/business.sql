@@ -160,3 +160,191 @@ CREATE TABLE IF NOT EXISTS sys_document (
     KEY idx_sys_document_category (category),
     KEY idx_sys_document_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '资料台账';
+
+-- ===== 工程进度 =====
+CREATE TABLE IF NOT EXISTS sys_progress (
+    id           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '进度ID',
+    project_id   BIGINT        NOT NULL COMMENT '项目ID',
+    stage        VARCHAR(20)   NOT NULL DEFAULT '施工阶段' COMMENT '阶段：准备阶段/施工阶段/验收阶段',
+    title        VARCHAR(200)  NOT NULL COMMENT '进度标题',
+    content      VARCHAR(1000) NOT NULL DEFAULT '' COMMENT '进度说明',
+    progress     INT           NOT NULL DEFAULT 0 COMMENT '更新后的项目进度',
+    report_date  DATE          NOT NULL COMMENT '上报日期',
+    creator_id   BIGINT                 DEFAULT NULL COMMENT '上报人ID',
+    creator_name VARCHAR(50)   NOT NULL DEFAULT '' COMMENT '上报人',
+    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_progress_project_id (project_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '工程进度记录';
+
+CREATE TABLE IF NOT EXISTS sys_progress_image (
+    id          BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    progress_id BIGINT NOT NULL COMMENT '进度ID',
+    file_id     BIGINT NOT NULL COMMENT '文件ID',
+    sort        INT    NOT NULL DEFAULT 0 COMMENT '排序',
+    PRIMARY KEY (id),
+    KEY idx_sys_progress_image_progress_id (progress_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '工程进度现场图片';
+
+-- ===== 项目验收 =====
+CREATE TABLE IF NOT EXISTS sys_acceptance (
+    id           BIGINT        NOT NULL AUTO_INCREMENT COMMENT '验收ID',
+    project_id   BIGINT        NOT NULL COMMENT '项目ID',
+    title        VARCHAR(200)  NOT NULL COMMENT '验收名称',
+    result       TINYINT       NOT NULL DEFAULT 0 COMMENT '结果：0待验收 1通过 2不通过',
+    accept_date  DATE                   DEFAULT NULL COMMENT '验收日期',
+    conclusion   VARCHAR(1000) NOT NULL DEFAULT '' COMMENT '验收结论',
+    creator_id   BIGINT                 DEFAULT NULL COMMENT '登记人ID',
+    creator_name VARCHAR(50)   NOT NULL DEFAULT '' COMMENT '登记人',
+    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_acceptance_project_id (project_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '项目验收';
+
+CREATE TABLE IF NOT EXISTS sys_acceptance_file (
+    id            BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    acceptance_id BIGINT NOT NULL COMMENT '验收ID',
+    file_id       BIGINT NOT NULL COMMENT '文件ID',
+    sort          INT    NOT NULL DEFAULT 0 COMMENT '排序',
+    PRIMARY KEY (id),
+    KEY idx_sys_acceptance_file_acceptance_id (acceptance_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '项目验收附件';
+
+INSERT IGNORE INTO sys_progress (id, project_id, stage, title, content, progress, report_date, creator_id, creator_name) VALUES
+    (1, 1, '施工阶段', '道路基层处理完成', '道路基层已全部处理完成，正在进行管网铺设与路面恢复准备。', 65, '2026-11-12', 1, '管理员'),
+    (2, 1, '施工阶段', '管网铺设进度更新', '雨污管网铺设完成约 60%，预计本周完成主干管施工。', 58, '2026-11-08', 1, '管理员'),
+    (3, 2, '准备阶段', '施工材料进场', '外墙保温材料已完成首批进场验收，施工队伍进场准备中。', 40, '2026-11-05', 1, '管理员'),
+    (4, 4, '施工阶段', '电梯设备安装', '8 个单元电梯设备已完成安装，进入调试阶段。', 82, '2026-11-10', 1, '管理员');
+
+INSERT IGNORE INTO sys_acceptance (id, project_id, title, result, accept_date, conclusion, creator_id, creator_name) VALUES
+    (1, 5, '绿化提升工程竣工验收', 1, '2026-10-28', '绿化提升工程验收合格，口袋公园与健身步道已投入使用。', 1, '管理员'),
+    (2, 7, '智慧安防项目验收', 1, '2026-09-25', '门禁、视频监控与消防预警系统运行正常，验收通过。', 1, '管理员'),
+    (3, 4, '电梯加装一期阶段验收', 0, NULL, '待电梯调试完成后组织验收。', 1, '管理员');
+
+-- ===== 居民绑定小区（sys_user.community_id） =====
+SET @has_community := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_user' AND COLUMN_NAME = 'community_id');
+SET @alter_community := IF(@has_community = 0,
+    'ALTER TABLE sys_user ADD COLUMN community_id BIGINT NULL COMMENT ''绑定小区ID'' AFTER email', 'SELECT 1');
+PREPARE stmt_community FROM @alter_community;
+EXECUTE stmt_community;
+DEALLOCATE PREPARE stmt_community;
+
+CREATE TABLE IF NOT EXISTS sys_user_community_log (
+    id            BIGINT      NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    user_id       BIGINT      NOT NULL COMMENT '用户ID',
+    community_id  BIGINT      NOT NULL COMMENT '小区ID',
+    operator_id   BIGINT               DEFAULT NULL COMMENT '操作人ID',
+    operator_name VARCHAR(50) NOT NULL DEFAULT '' COMMENT '操作人',
+    created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_user_community_log_user_id (user_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '居民小区绑定记录';
+
+-- 示例居民账号（密码均为 123456）
+INSERT IGNORE INTO sys_user (id, username, password, nickname, mobile, community_id, status) VALUES
+    (2, 'resident_li', '$2y$10$JvfGnak/56TzuCA0LY0CieCOUAHEDQynxdvHYc9RUK3sf3sJrb6yK', '李居民', '13911112222', 1, 1),
+    (3, 'resident_wang', '$2y$10$JvfGnak/56TzuCA0LY0CieCOUAHEDQynxdvHYc9RUK3sf3sJrb6yK', '王居民', '13933334444', 2, 1);
+INSERT IGNORE INTO sys_user_role (user_id, role_id) VALUES (2, 3), (3, 3);
+INSERT IGNORE INTO sys_user_community_log (id, user_id, community_id, operator_id, operator_name) VALUES
+    (1, 2, 1, 1, '管理员'),
+    (2, 3, 2, 1, '管理员');
+
+-- ===== 满意度评价 =====
+CREATE TABLE IF NOT EXISTS sys_satisfaction (
+    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '评价ID',
+    complaint_id BIGINT       NOT NULL COMMENT '投诉ID',
+    user_id      BIGINT       NOT NULL COMMENT '居民用户ID',
+    user_name    VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '居民名称',
+    score        TINYINT      NOT NULL COMMENT '评分 1-5',
+    comment      VARCHAR(300) NOT NULL DEFAULT '' COMMENT '评价内容',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '评价时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_satisfaction_complaint (complaint_id),
+    KEY idx_sys_satisfaction_score (score)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '满意度评价';
+
+INSERT IGNORE INTO sys_satisfaction (id, complaint_id, user_id, user_name, score, comment, created_at) VALUES
+    (1, 4, 2, '李居民', 5, '垃圾清理很及时，工作人员态度很好。', '2026-11-05 10:20:00'),
+    (2, 5, 3, '王居民', 4, '公示时间延长了，处理比较满意。', '2026-10-29 16:30:00'),
+    (3, 8, 2, '李居民', 5, '消防通道清理及时，安全隐患消除了。', '2026-10-13 09:10:00');
+
+-- ===== 操作日志 =====
+CREATE TABLE IF NOT EXISTS sys_operation_log (
+    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '日志ID',
+    user_id     BIGINT                DEFAULT NULL COMMENT '操作人ID',
+    user_name   VARCHAR(50)  NOT NULL DEFAULT '' COMMENT '操作人',
+    method      VARCHAR(10)  NOT NULL DEFAULT '' COMMENT '请求方法',
+    path        VARCHAR(200) NOT NULL DEFAULT '' COMMENT '请求路径',
+    ip          VARCHAR(50)  NOT NULL DEFAULT '' COMMENT 'IP',
+    duration_ms BIGINT       NOT NULL DEFAULT 0 COMMENT '耗时（毫秒）',
+    success     TINYINT      NOT NULL DEFAULT 1 COMMENT '是否成功：1成功 0失败',
+    error_msg   VARCHAR(500) NOT NULL DEFAULT '' COMMENT '失败信息',
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_operation_log_created_at (created_at),
+    KEY idx_sys_operation_log_user_id (user_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '操作日志';
+
+-- ===== C 端完善：施工单位、投诉事项类型、投诉图片 =====
+SET @has_unit := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_project' AND COLUMN_NAME = 'construction_unit');
+SET @alter_unit := IF(@has_unit = 0,
+    'ALTER TABLE sys_project ADD COLUMN construction_unit VARCHAR(100) NOT NULL DEFAULT '''' COMMENT ''施工单位'' AFTER manager',
+    'SELECT 1');
+PREPARE stmt_unit FROM @alter_unit;
+EXECUTE stmt_unit;
+DEALLOCATE PREPARE stmt_unit;
+
+SET @has_kind := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_complaint' AND COLUMN_NAME = 'kind');
+SET @alter_kind := IF(@has_kind = 0,
+    'ALTER TABLE sys_complaint ADD COLUMN kind VARCHAR(20) NOT NULL DEFAULT ''投诉'' COMMENT ''事项类型：投诉/建议/咨询'' AFTER type',
+    'SELECT 1');
+PREPARE stmt_kind FROM @alter_kind;
+EXECUTE stmt_kind;
+DEALLOCATE PREPARE stmt_kind;
+
+CREATE TABLE IF NOT EXISTS sys_complaint_image (
+    id           BIGINT NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    complaint_id BIGINT NOT NULL COMMENT '投诉ID',
+    file_id      BIGINT NOT NULL COMMENT '文件ID',
+    sort         INT    NOT NULL DEFAULT 0 COMMENT '排序',
+    PRIMARY KEY (id),
+    KEY idx_sys_complaint_image_complaint_id (complaint_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '投诉图片';
+
+UPDATE sys_project SET construction_unit = '市政建设集团' WHERE id IN (1, 3);
+UPDATE sys_project SET construction_unit = '城建安装工程公司' WHERE id IN (2, 4);
+UPDATE sys_project SET construction_unit = '园林绿化工程公司' WHERE id = 5;
+UPDATE sys_project SET construction_unit = '智慧城市科技公司' WHERE id = 7;
+
+-- ===== C 端原型补齐字段 =====
+SET @has_location := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_complaint' AND COLUMN_NAME = 'location');
+SET @alter_location := IF(@has_location = 0,
+    'ALTER TABLE sys_complaint ADD COLUMN location VARCHAR(200) NOT NULL DEFAULT '''' COMMENT ''问题位置'' AFTER community',
+    'SELECT 1');
+PREPARE stmt_location FROM @alter_location;
+EXECUTE stmt_location;
+DEALLOCATE PREPARE stmt_location;
+
+SET @has_remind := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_complaint' AND COLUMN_NAME = 'remind_count');
+SET @alter_remind := IF(@has_remind = 0,
+    'ALTER TABLE sys_complaint ADD COLUMN remind_count INT NOT NULL DEFAULT 0 COMMENT ''催办次数'' AFTER status',
+    'SELECT 1');
+PREPARE stmt_remind FROM @alter_remind;
+EXECUTE stmt_remind;
+DEALLOCATE PREPARE stmt_remind;
+
+SET @has_last_remind := (SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sys_complaint' AND COLUMN_NAME = 'last_remind_at');
+SET @alter_last_remind := IF(@has_last_remind = 0,
+    'ALTER TABLE sys_complaint ADD COLUMN last_remind_at DATETIME NULL COMMENT ''最近催办时间'' AFTER remind_count',
+    'SELECT 1');
+PREPARE stmt_last_remind FROM @alter_last_remind;
+EXECUTE stmt_last_remind;
+DEALLOCATE PREPARE stmt_last_remind;

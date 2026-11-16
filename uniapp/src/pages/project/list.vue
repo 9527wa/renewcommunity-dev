@@ -1,31 +1,69 @@
 <template>
   <view class="page">
-    <view class="filters">
+    <view class="hero">
+      <view class="hero-row">
+        <view class="community" @click="chooseCommunity">
+          <text class="community-icon">🏢</text>
+          <text class="community-name">{{ communityName }}</text>
+          <text class="community-arrow">›</text>
+        </view>
+        <text class="search-icon" @click="searchVisible = !searchVisible">⌕</text>
+      </view>
+      <view v-if="searchVisible" class="search-box">
+        <input
+          v-model="keyword"
+          class="search-input"
+          confirm-type="search"
+          placeholder="搜索项目名称 / 小区 / 类别"
+          @confirm="handleSearch"
+        />
+        <text class="search-btn" @click="handleSearch">搜索</text>
+      </view>
+    </view>
+
+    <view class="tabs">
       <view
-        v-for="filter in filters"
-        :key="filter.label"
-        class="filter"
-        :class="{ active: statusFilter === filter.value }"
-        @click="changeStatus(filter.value)"
+        v-for="tab in tabs"
+        :key="tab.label"
+        class="tab"
+        :class="{ active: statusFilter === tab.value }"
+        @click="changeStatus(tab.value)"
       >
-        {{ filter.label }}
+        {{ tab.label }}
       </view>
     </view>
 
     <view class="list">
       <view v-for="item in list" :key="item.id" class="card" @click="openDetail(item.id)">
-        <view class="row">
-          <text class="name">{{ item.name }}</text>
-          <text class="status" :class="statusClass(item.status)">{{ statusText(item.status) }}</text>
-        </view>
-        <text class="community">{{ item.community || '未知小区' }} · {{ item.category || '改造项目' }}</text>
-        <view class="progress-row">
-          <view class="track">
-            <view class="fill" :style="{ width: item.progress + '%' }" />
+        <image class="cover" :src="coverImage(item.id)" mode="aspectFill" />
+
+        <view class="card-main">
+          <view class="title-row">
+            <text class="title">{{ item.name }}</text>
+            <text class="status" :class="statusClass(item.status)">{{ statusText(item.status) }}</text>
           </view>
-          <text class="percent">{{ item.progress }}%</text>
+
+          <view class="info-row">
+            <text class="info-icon">▤</text>
+            <text class="info-text">计划时间：{{ formatPlan(item) }}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-icon">▣</text>
+            <text class="info-text ellipsis">改造内容：{{ contentText(item) }}</text>
+          </view>
+
+          <view class="progress-row">
+            <text class="progress-label">项目进度</text>
+            <view class="track">
+              <view class="fill" :style="{ width: item.progress + '%' }" />
+            </view>
+            <text class="percent">{{ item.progress }}%</text>
+          </view>
+
+          <view class="detail-row">
+            <text class="detail-btn">查看详情</text>
+          </view>
         </view>
-        <text class="plan">计划时间：{{ formatPlan(item) }}</text>
       </view>
 
       <view v-if="!list.length && !loading" class="empty">暂无项目</view>
@@ -34,29 +72,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
-import { fetchProjectList } from '@/api/app';
-import type { AppProject } from '@/api/app';
+import { computed, ref } from 'vue';
+import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app';
+import { bindCommunity, fetchCommunityList, fetchProfile, fetchProjectList } from '@/api/app';
+import type { AppCommunity, AppProfile, AppProject } from '@/api/app';
 
-const filters = [
+const tabs = [
   { label: '全部', value: null },
-  { label: '规划中', value: 0 },
   { label: '施工中', value: 1 },
-  { label: '已完成', value: 2 }
+  { label: '准备中', value: 0 },
+  { label: '已完工', value: 2 }
+];
+
+const projectImages = [
+  '/static/home/project-street.png',
+  '/static/home/news-road.png',
+  '/static/home/news-notice.png',
+  '/static/home/banner-scene.png'
 ];
 
 const list = ref<AppProject[]>([]);
+const profile = ref<AppProfile | null>(null);
+const communities = ref<AppCommunity[]>([]);
 const statusFilter = ref<number | null>(null);
+const keyword = ref('');
+const searchVisible = ref(false);
 const loading = ref(false);
+
+const communityName = computed(() => profile.value?.communityName || '选择小区');
+
+function coverImage(id: number) {
+  return projectImages[id % projectImages.length];
+}
 
 function statusText(status: number) {
   if (status === 0) {
-    return '规划中';
+    return '准备中';
   }
 
   if (status === 2) {
-    return '已完成';
+    return '已完工';
   }
 
   return '施工中';
@@ -64,7 +119,7 @@ function statusText(status: number) {
 
 function statusClass(status: number) {
   if (status === 0) {
-    return 'status-planning';
+    return 'status-preparing';
   }
 
   if (status === 2) {
@@ -79,7 +134,21 @@ function formatPlan(item: AppProject) {
     return '待定';
   }
 
-  return `${item.startDate.slice(0, 10)} ~ ${item.endDate.slice(0, 10)}`;
+  return `${item.startDate.slice(0, 7).replace('-', '.')} - ${item.endDate.slice(0, 7).replace('-', '.')}`;
+}
+
+function contentText(item: AppProject) {
+  return item.description || item.category || '小区改造提升';
+}
+
+async function loadBaseData() {
+  try {
+    const [profileData, communityList] = await Promise.all([fetchProfile(), fetchCommunityList()]);
+    profile.value = profileData;
+    communities.value = communityList;
+  } catch {
+    // 错误提示由 request 统一处理
+  }
 }
 
 async function load() {
@@ -92,6 +161,8 @@ async function load() {
   try {
     const page = await fetchProjectList({
       status: statusFilter.value ?? undefined,
+      community: profile.value?.communityName || undefined,
+      keyword: keyword.value.trim() || undefined,
       pageNum: 1,
       pageSize: 50
     });
@@ -108,11 +179,51 @@ function changeStatus(value: number | null) {
   load();
 }
 
+function handleSearch() {
+  load();
+}
+
 function openDetail(id: number) {
   uni.navigateTo({ url: `/pages/project/detail?id=${id}` });
 }
 
-onLoad(load);
+function chooseCommunity() {
+  if (!communities.value.length) {
+    uni.showToast({ title: '暂无可选择的小区', icon: 'none' });
+    return;
+  }
+
+  uni.showActionSheet({
+    itemList: communities.value.map(item => item.name),
+    success: async res => {
+      const community = communities.value[res.tapIndex];
+
+      if (!community) {
+        return;
+      }
+
+      try {
+        await bindCommunity(community.id);
+        profile.value = await fetchProfile();
+        uni.showToast({ title: `已切换到${community.name}`, icon: 'none' });
+        await load();
+      } catch {
+        // 错误提示由 request 统一处理
+      }
+    }
+  });
+}
+
+onLoad(async () => {
+  await loadBaseData();
+  await load();
+});
+
+onPullDownRefresh(async () => {
+  await loadBaseData();
+  await load();
+  uni.stopPullDownRefresh();
+});
 </script>
 
 <style scoped>
@@ -122,24 +233,95 @@ onLoad(load);
   background-color: #eef2f7;
 }
 
-.filters {
-  display: flex;
-  padding: 24rpx 24rpx 0;
+.hero {
+  padding: calc(24rpx + var(--status-bar-height)) 24rpx 28rpx;
+  background: linear-gradient(180deg, #3d92ef 0%, #5aa6f3 55%, #86c0f9 100%);
 }
 
-.filter {
-  margin-right: 16rpx;
-  padding: 10rpx 26rpx;
-  border-radius: 28rpx;
+.hero-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.community {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.community-icon {
+  margin-right: 8rpx;
+  font-size: 26rpx;
+}
+
+.community-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.community-arrow {
+  margin-left: 8rpx;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.search-icon {
+  font-size: 40rpx;
+  color: #ffffff;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  font-size: 25rpx;
   background-color: #ffffff;
-  font-size: 24rpx;
+  border-radius: 36rpx;
+}
+
+.search-btn {
+  margin-left: 14rpx;
+  padding: 0 26rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 36rpx;
+  background-color: rgba(255, 255, 255, 0.9);
+  font-size: 25rpx;
+  color: #1677ff;
+}
+
+.tabs {
+  display: flex;
+  padding: 20rpx 16rpx;
+  background-color: #ffffff;
+}
+
+.tab {
+  flex: 1;
+  height: 66rpx;
+  line-height: 66rpx;
+  margin: 0 8rpx;
+  border-radius: 33rpx;
+  text-align: center;
+  font-size: 25rpx;
   color: #5b6472;
 }
 
-.filter.active {
-  background: linear-gradient(135deg, #3b9cf7 0%, #1677ff 100%);
+.tab.active {
+  background: linear-gradient(135deg, #2fb47a 0%, #22a06b 100%);
   color: #ffffff;
-  box-shadow: 0 6rpx 14rpx rgba(22, 119, 255, 0.24);
+  font-weight: 600;
 }
 
 .list {
@@ -147,88 +329,134 @@ onLoad(load);
 }
 
 .card {
+  display: flex;
   margin-bottom: 24rpx;
-  padding: 28rpx;
-  background-color: #ffffff;
+  padding: 20rpx;
   border-radius: 20rpx;
+  background-color: #ffffff;
   box-shadow: 0 8rpx 24rpx rgba(31, 45, 61, 0.05);
 }
 
-.row {
+.cover {
+  flex-shrink: 0;
+  width: 200rpx;
+  height: 190rpx;
+  border-radius: 14rpx;
+}
+
+.card-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 18rpx;
+}
+
+.title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
 }
 
-.name {
+.title {
   flex: 1;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
+  line-height: 1.4;
   color: #1f2d3d;
 }
 
 .status {
   flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 4rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 22rpx;
+  margin-left: 10rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 14rpx;
+  font-size: 21rpx;
 }
 
-.status-planning {
-  background-color: #f1f4f8;
-  color: #6b7280;
+.status-preparing {
+  background-color: #eef2f7;
+  color: #5b6472;
 }
 
 .status-ongoing {
-  background-color: #eaf3ff;
-  color: #1677ff;
-}
-
-.status-done {
   background-color: #e9f8ef;
   color: #16a34a;
 }
 
-.community {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 24rpx;
+.status-done {
+  background-color: #e9f8ef;
+  color: #15803d;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+}
+
+.info-icon {
+  margin-right: 6rpx;
+  font-size: 20rpx;
+  color: #9aa4b2;
+}
+
+.info-text {
+  flex: 1;
+  font-size: 21rpx;
   color: #8b95a4;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .progress-row {
   display: flex;
   align-items: center;
-  margin-top: 18rpx;
+  margin-top: 12rpx;
+}
+
+.progress-label {
+  flex-shrink: 0;
+  margin-right: 10rpx;
+  font-size: 21rpx;
+  color: #6b7280;
 }
 
 .track {
   flex: 1;
-  height: 12rpx;
-  border-radius: 6rpx;
+  height: 10rpx;
+  border-radius: 5rpx;
   background-color: #e8edf4;
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  border-radius: 6rpx;
+  border-radius: 5rpx;
   background: linear-gradient(90deg, #39c26b 0%, #22a06b 100%);
 }
 
 .percent {
-  margin-left: 14rpx;
-  font-size: 24rpx;
+  margin-left: 10rpx;
+  font-size: 22rpx;
   font-weight: 600;
   color: #16a34a;
 }
 
-.plan {
-  display: block;
-  margin-top: 14rpx;
-  font-size: 22rpx;
-  color: #9aa4b2;
+.detail-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10rpx;
+}
+
+.detail-btn {
+  padding: 4rpx 20rpx;
+  border: 2rpx solid #9fd9bd;
+  border-radius: 20rpx;
+  font-size: 21rpx;
+  color: #22a06b;
 }
 
 .empty {

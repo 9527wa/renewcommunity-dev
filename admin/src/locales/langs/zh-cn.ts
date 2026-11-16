@@ -236,7 +236,14 @@ const local: App.I18n.Schema = {
     fund: '资金管理',
     community: '小区管理',
     announcement: '公告管理',
-    document: '资料台账'
+    document: '资料台账',
+    progress: '工程进度',
+    acceptance: '项目验收',
+    satisfaction: '满意度管理',
+    resident: '居民用户',
+    statistics: '统计分析',
+    file: '文件管理',
+    log: '操作日志'
   },
   page: {
     login: {

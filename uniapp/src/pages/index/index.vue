@@ -3,7 +3,7 @@
     <view class="header">
       <view class="header-top">
         <view class="community" @click="handleCommunity">
-          <text class="community-name">幸福家园小区</text>
+          <text class="community-name">{{ communityName }}</text>
           <text class="community-arrow">▾</text>
         </view>
         <text class="community-sub">老旧小区改造服务平台</text>
@@ -133,9 +133,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
-import { fetchAnnouncementList, fetchProjectList } from '@/api/app';
-import type { AppAnnouncement, AppProject } from '@/api/app';
+import { onPullDownRefresh, onShow } from '@dcloudio/uni-app';
+import { bindCommunity, fetchAnnouncementList, fetchCommunityList, fetchProfile, fetchProjectList } from '@/api/app';
+import type { AppAnnouncement, AppCommunity, AppProfile, AppProject } from '@/api/app';
 import TabBar from '@/components/tab-bar/tab-bar.vue';
 import { clearToken, isLoggedIn } from '@/utils/auth';
 
@@ -143,6 +143,8 @@ const newsImages = ['/static/home/news-pipe.png', '/static/home/news-road.png', 
 
 const announcements = ref<AppAnnouncement[]>([]);
 const projects = ref<AppProject[]>([]);
+const profile = ref<AppProfile | null>(null);
+const communities = ref<AppCommunity[]>([]);
 
 const banners = computed(() =>
   announcements.value.length
@@ -154,9 +156,14 @@ const banners = computed(() =>
     : [{ id: 0, title: '欢迎使用老旧小区改造服务平台', desc: '公告发布后将在这里展示，敬请关注' }]
 );
 
-const currentProject = computed<AppProject | null>(
-  () => projects.value.find(item => item.status === 1) ?? projects.value[0] ?? null
-);
+const communityName = computed(() => profile.value?.communityName || '选择小区');
+
+const currentProject = computed<AppProject | null>(() => {
+  const community = profile.value?.communityName;
+  const scoped = community ? projects.value.filter(item => item.community === community) : projects.value;
+
+  return scoped.find(item => item.status === 1) ?? scoped[0] ?? projects.value[0] ?? null;
+});
 
 const projectStatusLabel = computed(() => {
   const status = currentProject.value?.status;
@@ -222,13 +229,17 @@ function formatMonthDay(value?: string | null) {
 
 async function loadData() {
   try {
-    const [announcementPage, projectPage] = await Promise.all([
+    const [announcementPage, projectPage, profileData, communityList] = await Promise.all([
       fetchAnnouncementList({ pageNum: 1, pageSize: 5 }),
-      fetchProjectList({ pageNum: 1, pageSize: 50 })
+      fetchProjectList({ pageNum: 1, pageSize: 50 }),
+      fetchProfile(),
+      fetchCommunityList()
     ]);
 
     announcements.value = announcementPage.list;
     projects.value = projectPage.list;
+    profile.value = profileData;
+    communities.value = communityList;
   } catch {
     // 错误提示由 request 统一处理
   }
@@ -248,8 +259,35 @@ onShow(() => {
   loadData();
 });
 
-function handleCommunity() {
-  uni.showToast({ title: '切换小区功能建设中', icon: 'none' });
+onPullDownRefresh(async () => {
+  await loadData();
+  uni.stopPullDownRefresh();
+});
+
+async function handleCommunity() {
+  if (!communities.value.length) {
+    uni.showToast({ title: '暂无可选择的小区', icon: 'none' });
+    return;
+  }
+
+  uni.showActionSheet({
+    itemList: communities.value.map(item => item.name),
+    success: async res => {
+      const community = communities.value[res.tapIndex];
+
+      if (!community) {
+        return;
+      }
+
+      try {
+        await bindCommunity(community.id);
+        uni.showToast({ title: `已切换到${community.name}`, icon: 'none' });
+        await loadData();
+      } catch {
+        // 错误提示由 request 统一处理
+      }
+    }
+  });
 }
 
 function openAnnouncement(id: number) {
@@ -279,8 +317,13 @@ function handleProjectDetail() {
 }
 
 function handleAction(name: string) {
-  if (name === '投诉建议' || name === '办理进度') {
+  if (name === '投诉建议') {
     uni.reLaunch({ url: '/pages/complaint/index' });
+    return;
+  }
+
+  if (name === '办理进度') {
+    uni.navigateTo({ url: '/pages/complaint/my' });
     return;
   }
 

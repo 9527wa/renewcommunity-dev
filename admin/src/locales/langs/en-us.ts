@@ -240,7 +240,14 @@ const local: App.I18n.Schema = {
     fund: 'Funds',
     community: 'Communities',
     announcement: 'Announcements',
-    document: 'Documents'
+    document: 'Documents',
+    progress: 'Progress',
+    acceptance: 'Acceptance',
+    satisfaction: 'Satisfaction',
+    resident: 'Residents',
+    statistics: 'Statistics',
+    file: 'Files',
+    log: 'Operation Logs'
   },
   page: {
     login: {

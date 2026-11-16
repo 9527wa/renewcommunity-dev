@@ -27,6 +27,9 @@ public class SysUser {
 
     private String email;
 
+    /** 绑定小区ID（C 端居民） */
+    private Long communityId;
+
     /** 状态：1 启用，0 停用 */
     private Integer status;
 

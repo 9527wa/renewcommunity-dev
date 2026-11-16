@@ -17,6 +17,7 @@ public record ProjectVO(
         LocalDate startDate,
         LocalDate endDate,
         String manager,
+        String constructionUnit,
         String description
 ) {
 }

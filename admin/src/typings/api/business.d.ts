@@ -19,6 +19,7 @@ declare namespace Api {
       startDate: string | null;
       endDate: string | null;
       manager: string;
+      constructionUnit: string;
       description: string;
     }
 
@@ -44,18 +45,27 @@ declare namespace Api {
       startDate: string | null;
       endDate: string | null;
       manager?: string;
+      constructionUnit?: string;
       description?: string;
     }
 
     /** complaint status: 0 pending, 1 processing, 2 resolved */
     type ComplaintStatus = 0 | 1 | 2;
 
+    interface FileRefItem {
+      fileId: number;
+      fileName?: string | null;
+      contentType?: string | null;
+    }
+
     interface Complaint {
       id: number;
       title: string;
       content: string;
       community: string;
+      location: string;
       type: string;
+      kind: string;
       status: ComplaintStatus;
       projectId: number | null;
       projectName: string | null;
@@ -64,6 +74,7 @@ declare namespace Api {
       reply: string;
       handledAt: string | null;
       createdAt: string;
+      images: FileRefItem[];
     }
 
     interface ComplaintList {
@@ -82,7 +93,9 @@ declare namespace Api {
       title: string;
       content?: string;
       community?: string;
+      location?: string;
       type?: string;
+      kind?: string;
       projectId?: number | null;
       contactName?: string;
       contactMobile?: string;
@@ -268,6 +281,251 @@ declare namespace Api {
       category?: string | null;
       projectId?: number | null;
       status?: DocumentStatus | null;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    /** progress image */
+    interface ProgressImage {
+      id: number;
+      fileId: number;
+      fileName?: string | null;
+      fileSize?: number | null;
+      contentType?: string | null;
+    }
+
+    /** project progress record */
+    interface Progress {
+      id: number;
+      projectId: number;
+      projectName?: string | null;
+      stage: string;
+      title: string;
+      content: string;
+      progress: number;
+      reportDate: string;
+      creatorName: string;
+      createdAt: string;
+      images: ProgressImage[];
+    }
+
+    interface ProgressList {
+      total: number;
+      list: Progress[];
+    }
+
+    interface ProgressSearchParams {
+      projectId?: number | null;
+      stage?: string | null;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    interface ProgressUpdateParams {
+      stage: string;
+      title: string;
+      content?: string;
+      progress: number;
+      reportDate: string;
+    }
+
+    /** acceptance result: 0 pending, 1 passed, 2 failed */
+    type AcceptanceResult = 0 | 1 | 2;
+
+    interface AcceptanceFile {
+      id: number;
+      fileId: number;
+      fileName?: string | null;
+      fileSize?: number | null;
+      contentType?: string | null;
+    }
+
+    interface Acceptance {
+      id: number;
+      projectId: number;
+      projectName?: string | null;
+      title: string;
+      result: AcceptanceResult;
+      acceptDate: string | null;
+      conclusion: string;
+      creatorName: string;
+      createdAt: string;
+      attachments: AcceptanceFile[];
+    }
+
+    interface AcceptanceList {
+      total: number;
+      list: Acceptance[];
+    }
+
+    interface AcceptanceSearchParams {
+      projectId?: number | null;
+      result?: AcceptanceResult | null;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    interface AcceptanceUpdateParams {
+      title: string;
+      result: AcceptanceResult;
+      acceptDate: string | null;
+      conclusion?: string;
+    }
+
+    /** satisfaction */
+    interface Satisfaction {
+      id: number;
+      complaintId: number;
+      complaintTitle?: string | null;
+      userName: string;
+      score: number;
+      comment: string;
+      createdAt: string;
+    }
+
+    interface SatisfactionList {
+      total: number;
+      list: Satisfaction[];
+    }
+
+    interface SatisfactionSearchParams {
+      score?: number | null;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    interface SatisfactionStats {
+      total: number;
+      averageScore: number;
+      fiveCount: number;
+      fourCount: number;
+      goodRate: number;
+      oneCount: number;
+      twoCount: number;
+      threeCount: number;
+    }
+
+    /** resident */
+    interface Resident {
+      id: number;
+      username: string;
+      nickname: string;
+      mobile: string;
+      email: string;
+      status: 0 | 1;
+      communityId: number | null;
+      communityName?: string | null;
+      createdAt: string;
+    }
+
+    interface ResidentList {
+      total: number;
+      list: Resident[];
+    }
+
+    interface ResidentSearchParams {
+      keyword?: string;
+      communityId?: number | null;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    interface CommunityBinding {
+      id: number;
+      communityId: number;
+      communityName?: string | null;
+      operatorName: string;
+      createdAt: string;
+    }
+
+    /** statistics */
+    interface NameCount {
+      name: string;
+      count: number;
+    }
+
+    interface Statistics {
+      project: {
+        total: number;
+        planning: number;
+        ongoing: number;
+        completed: number;
+        averageProgress: number;
+        categories: NameCount[];
+      };
+      complaint: {
+        total: number;
+        pending: number;
+        processing: number;
+        resolved: number;
+        thisMonth: number;
+        types: NameCount[];
+      };
+      fund: {
+        budget: number;
+        allocated: number;
+        spent: number;
+        executionRate: number;
+      };
+      document: {
+        total: number;
+        archived: number;
+        categories: NameCount[];
+      };
+      satisfaction: {
+        total: number;
+        averageScore: number;
+        goodRate: number;
+      };
+      progress: {
+        total: number;
+        thisMonth: number;
+      };
+    }
+
+    /** file management */
+    interface FileItem {
+      id: number;
+      originalName: string;
+      contentType: string;
+      size: number;
+      uploaderName: string;
+      createdAt: string;
+    }
+
+    interface FileList {
+      total: number;
+      list: FileItem[];
+    }
+
+    interface FileSearchParams {
+      keyword?: string;
+      pageNum: number;
+      pageSize: number;
+    }
+
+    /** operation log */
+    interface OperationLog {
+      id: number;
+      userId?: number | null;
+      userName: string;
+      method: string;
+      path: string;
+      ip: string;
+      durationMs: number;
+      success: 0 | 1;
+      errorMsg: string;
+      createdAt: string;
+    }
+
+    interface OperationLogList {
+      total: number;
+      list: OperationLog[];
+    }
+
+    interface OperationLogSearchParams {
+      keyword?: string;
+      success?: 0 | 1 | null;
       pageNum: number;
       pageSize: number;
     }

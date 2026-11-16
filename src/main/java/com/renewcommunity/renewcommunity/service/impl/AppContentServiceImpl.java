@@ -7,20 +7,34 @@ import com.renewcommunity.renewcommunity.common.api.ResultCode;
 import com.renewcommunity.renewcommunity.common.exception.BusinessException;
 import com.renewcommunity.renewcommunity.entity.SysAnnouncement;
 import com.renewcommunity.renewcommunity.entity.SysCommunity;
+import com.renewcommunity.renewcommunity.entity.SysFile;
+import com.renewcommunity.renewcommunity.entity.SysProgress;
+import com.renewcommunity.renewcommunity.entity.SysProgressImage;
 import com.renewcommunity.renewcommunity.entity.SysProject;
 import com.renewcommunity.renewcommunity.mapper.SysAnnouncementMapper;
 import com.renewcommunity.renewcommunity.mapper.SysCommunityMapper;
+import com.renewcommunity.renewcommunity.mapper.SysFileMapper;
+import com.renewcommunity.renewcommunity.mapper.SysProgressImageMapper;
+import com.renewcommunity.renewcommunity.mapper.SysProgressMapper;
 import com.renewcommunity.renewcommunity.mapper.SysProjectMapper;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementDetailVO;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementVO;
 import com.renewcommunity.renewcommunity.model.vo.AppCommunityVO;
+import com.renewcommunity.renewcommunity.model.vo.AppProgressVO;
+import com.renewcommunity.renewcommunity.model.vo.FileRefVO;
 import com.renewcommunity.renewcommunity.model.vo.AppProjectVO;
 import com.renewcommunity.renewcommunity.service.AppContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * C 端公开内容实现。
@@ -37,12 +51,25 @@ public class AppContentServiceImpl implements AppContentService {
 
     private final SysCommunityMapper communityMapper;
 
+    private final SysProgressMapper progressMapper;
+
+    private final SysProgressImageMapper progressImageMapper;
+
+    private final SysFileMapper fileMapper;
+
     @Override
-    public PageResult<AppAnnouncementVO> listAnnouncements(int pageNum, int pageSize) {
+    public PageResult<AppAnnouncementVO> listAnnouncements(String keyword, int pageNum, int pageSize) {
         Page<SysAnnouncement> page = new Page<>(Math.max(pageNum, 1), Math.min(Math.max(pageSize, 1), 100));
         var query = Wrappers.<SysAnnouncement>lambdaQuery()
-                .eq(SysAnnouncement::getStatus, 1)
-                .orderByDesc(SysAnnouncement::getPublishedAt)
+                .eq(SysAnnouncement::getStatus, 1);
+
+        if (StringUtils.hasText(keyword)) {
+            query.and(wrapper -> wrapper.like(SysAnnouncement::getTitle, keyword)
+                    .or()
+                    .like(SysAnnouncement::getContent, keyword));
+        }
+
+        query.orderByDesc(SysAnnouncement::getPublishedAt)
                 .orderByDesc(SysAnnouncement::getId);
 
         Page<SysAnnouncement> result = announcementMapper.selectPage(page, query);
@@ -67,7 +94,8 @@ public class AppContentServiceImpl implements AppContentService {
     }
 
     @Override
-    public PageResult<AppProjectVO> listProjects(Integer status, String community, int pageNum, int pageSize) {
+    public PageResult<AppProjectVO> listProjects(Integer status, String community, String keyword,
+                                                 int pageNum, int pageSize) {
         Page<SysProject> page = new Page<>(Math.max(pageNum, 1), Math.min(Math.max(pageSize, 1), 100));
         var query = Wrappers.<SysProject>lambdaQuery();
 
@@ -77,6 +105,14 @@ public class AppContentServiceImpl implements AppContentService {
 
         if (StringUtils.hasText(community)) {
             query.eq(SysProject::getCommunity, community);
+        }
+
+        if (StringUtils.hasText(keyword)) {
+            query.and(wrapper -> wrapper.like(SysProject::getName, keyword)
+                    .or()
+                    .like(SysProject::getCommunity, keyword)
+                    .or()
+                    .like(SysProject::getCategory, keyword));
         }
 
         query.orderByDesc(SysProject::getId);
@@ -98,6 +134,31 @@ public class AppContentServiceImpl implements AppContentService {
     }
 
     @Override
+    public PageResult<AppProgressVO> listProjectProgress(Long projectId, int pageNum, int pageSize) {
+        if (projectId == null || projectMapper.selectById(projectId) == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "项目不存在");
+        }
+
+        Page<SysProgress> page = new Page<>(Math.max(pageNum, 1), Math.min(Math.max(pageSize, 1), 100));
+        var query = Wrappers.<SysProgress>lambdaQuery()
+                .eq(SysProgress::getProjectId, projectId)
+                .orderByDesc(SysProgress::getReportDate)
+                .orderByDesc(SysProgress::getId);
+        Page<SysProgress> result = progressMapper.selectPage(page, query);
+        Map<Long, List<FileRefVO>> images = loadProgressImages(result.getRecords().stream()
+                .map(SysProgress::getId)
+                .toList());
+
+        List<AppProgressVO> list = result.getRecords().stream()
+                .map(item -> new AppProgressVO(item.getId(), item.getStage(), item.getTitle(), item.getContent(),
+                        item.getProgress(), item.getReportDate(), item.getCreatedAt(),
+                        images.getOrDefault(item.getId(), List.of())))
+                .toList();
+
+        return new PageResult<>(result.getTotal(), list);
+    }
+
+    @Override
     public List<AppCommunityVO> listCommunities() {
         return communityMapper.selectList(Wrappers.<SysCommunity>lambdaQuery()
                         .eq(SysCommunity::getStatus, 1)
@@ -106,6 +167,31 @@ public class AppContentServiceImpl implements AppContentService {
                 .map(item -> new AppCommunityVO(item.getId(), item.getName(), item.getAddress(),
                         item.getBuildingCount(), item.getHouseholdCount()))
                 .toList();
+    }
+
+    private Map<Long, List<FileRefVO>> loadProgressImages(Collection<Long> progressIds) {
+        if (progressIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<SysProgressImage> links = progressImageMapper.selectList(Wrappers.<SysProgressImage>lambdaQuery()
+                .in(SysProgressImage::getProgressId, progressIds)
+                .orderByAsc(SysProgressImage::getSort));
+        if (links.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> fileIds = links.stream().map(SysProgressImage::getFileId).toList();
+        Map<Long, SysFile> files = fileMapper.selectBatchIds(fileIds).stream()
+                .collect(Collectors.toMap(SysFile::getId, item -> item));
+
+        return links.stream().collect(Collectors.groupingBy(SysProgressImage::getProgressId,
+                Collectors.mapping(link -> {
+                    SysFile file = files.get(link.getFileId());
+                    return new FileRefVO(link.getFileId(),
+                            file == null ? null : file.getOriginalName(),
+                            file == null ? null : file.getContentType());
+                }, Collectors.toList())));
     }
 
     private String summarize(String content) {
@@ -120,6 +206,6 @@ public class AppContentServiceImpl implements AppContentService {
     private static AppProjectVO toVO(SysProject project) {
         return new AppProjectVO(project.getId(), project.getName(), project.getCommunity(), project.getCategory(),
                 project.getStatus(), project.getProgress(), project.getStartDate(), project.getEndDate(),
-                project.getDescription());
+                project.getConstructionUnit(), project.getManager(), project.getDescription());
     }
 }

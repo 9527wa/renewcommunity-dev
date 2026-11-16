@@ -6,15 +6,19 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.renewcommunity.renewcommunity.common.api.PageResult;
 import com.renewcommunity.renewcommunity.common.api.ResultCode;
 import com.renewcommunity.renewcommunity.common.exception.BusinessException;
+import com.renewcommunity.renewcommunity.entity.SysComplaint;
 import com.renewcommunity.renewcommunity.entity.SysMenu;
 import com.renewcommunity.renewcommunity.entity.SysRole;
 import com.renewcommunity.renewcommunity.entity.SysRoleMenu;
 import com.renewcommunity.renewcommunity.entity.SysUser;
+import com.renewcommunity.renewcommunity.entity.SysUserCommunityLog;
 import com.renewcommunity.renewcommunity.entity.SysUserRole;
+import com.renewcommunity.renewcommunity.mapper.SysComplaintMapper;
 import com.renewcommunity.renewcommunity.mapper.SysMenuMapper;
 import com.renewcommunity.renewcommunity.mapper.SysRoleMapper;
 import com.renewcommunity.renewcommunity.mapper.SysRoleMenuMapper;
 import com.renewcommunity.renewcommunity.mapper.SysUserMapper;
+import com.renewcommunity.renewcommunity.mapper.SysUserCommunityLogMapper;
 import com.renewcommunity.renewcommunity.mapper.SysUserRoleMapper;
 import com.renewcommunity.renewcommunity.model.dto.MenuSaveRequest;
 import com.renewcommunity.renewcommunity.model.dto.PasswordResetRequest;
@@ -57,6 +61,10 @@ public class RbacServiceImpl implements RbacService {
     private final SysUserRoleMapper userRoleMapper;
 
     private final SysRoleMenuMapper roleMenuMapper;
+
+    private final SysComplaintMapper complaintMapper;
+
+    private final SysUserCommunityLogMapper bindingLogMapper;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -137,8 +145,17 @@ public class RbacServiceImpl implements RbacService {
         }
 
         requireUser(id);
+
+        long complaintCount = complaintMapper.selectCount(Wrappers.<SysComplaint>lambdaQuery()
+                .eq(SysComplaint::getSubmitterId, id));
+        if (complaintCount > 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "该用户名下存在投诉记录，无法删除");
+        }
+
         userMapper.deleteById(id);
         userRoleMapper.delete(Wrappers.<SysUserRole>lambdaQuery().eq(SysUserRole::getUserId, id));
+        bindingLogMapper.delete(Wrappers.<SysUserCommunityLog>lambdaQuery()
+                .eq(SysUserCommunityLog::getUserId, id));
     }
 
     @Override

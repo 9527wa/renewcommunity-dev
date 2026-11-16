@@ -5,6 +5,7 @@ import com.renewcommunity.renewcommunity.common.api.Result;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementDetailVO;
 import com.renewcommunity.renewcommunity.model.vo.AppAnnouncementVO;
 import com.renewcommunity.renewcommunity.model.vo.AppCommunityVO;
+import com.renewcommunity.renewcommunity.model.vo.AppProgressVO;
 import com.renewcommunity.renewcommunity.model.vo.AppProjectVO;
 import com.renewcommunity.renewcommunity.service.AppContentService;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,10 @@ public class AppContentController {
     private final AppContentService appContentService;
 
     @GetMapping("/announcement/list")
-    public Result<PageResult<AppAnnouncementVO>> listAnnouncements(@RequestParam(defaultValue = "1") int pageNum,
+    public Result<PageResult<AppAnnouncementVO>> listAnnouncements(@RequestParam(required = false) String keyword,
+                                                                   @RequestParam(defaultValue = "1") int pageNum,
                                                                    @RequestParam(defaultValue = "10") int pageSize) {
-        return Result.ok(appContentService.listAnnouncements(pageNum, pageSize));
+        return Result.ok(appContentService.listAnnouncements(keyword, pageNum, pageSize));
     }
 
     @GetMapping("/announcement/{id}")
@@ -40,14 +42,22 @@ public class AppContentController {
     @GetMapping("/project/list")
     public Result<PageResult<AppProjectVO>> listProjects(@RequestParam(required = false) Integer status,
                                                          @RequestParam(required = false) String community,
+                                                         @RequestParam(required = false) String keyword,
                                                          @RequestParam(defaultValue = "1") int pageNum,
                                                          @RequestParam(defaultValue = "10") int pageSize) {
-        return Result.ok(appContentService.listProjects(status, community, pageNum, pageSize));
+        return Result.ok(appContentService.listProjects(status, community, keyword, pageNum, pageSize));
     }
 
     @GetMapping("/project/{id}")
     public Result<AppProjectVO> getProject(@PathVariable Long id) {
         return Result.ok(appContentService.getProject(id));
+    }
+
+    @GetMapping("/project/{id}/progress")
+    public Result<PageResult<AppProgressVO>> listProjectProgress(@PathVariable Long id,
+                                                                 @RequestParam(defaultValue = "1") int pageNum,
+                                                                 @RequestParam(defaultValue = "10") int pageSize) {
+        return Result.ok(appContentService.listProjectProgress(id, pageNum, pageSize));
     }
 
     @GetMapping("/community/list")

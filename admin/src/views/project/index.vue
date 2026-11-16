@@ -42,7 +42,19 @@ const pagination = reactive({
 });
 
 const columns = computed<DataTableColumns<Api.Business.Project>>(() => [
-  { key: 'name', title: '项目名称', minWidth: 190, ellipsis: { tooltip: true } },
+  {
+    key: 'name',
+    title: '项目名称',
+    minWidth: 190,
+    ellipsis: { tooltip: true },
+    render: row =>
+      h('div', {}, [
+        h('div', row.name),
+        row.constructionUnit
+          ? h('div', { style: 'font-size: 12px; color: #9aa4b2; margin-top: 2px;' }, row.constructionUnit)
+          : null
+      ])
+  },
   { key: 'community', title: '所属小区', width: 140, ellipsis: { tooltip: true } },
   {
     key: 'status',
@@ -184,6 +196,7 @@ const model = reactive({
   startDate: null as string | null,
   endDate: null as string | null,
   manager: '',
+  constructionUnit: '',
   description: ''
 });
 
@@ -203,6 +216,7 @@ function resetModel() {
   model.startDate = null;
   model.endDate = null;
   model.manager = '';
+  model.constructionUnit = '';
   model.description = '';
 }
 
@@ -223,6 +237,7 @@ function handleEdit(row: Api.Business.Project) {
   model.startDate = row.startDate;
   model.endDate = row.endDate;
   model.manager = row.manager;
+  model.constructionUnit = row.constructionUnit;
   model.description = row.description;
   modalVisible.value = true;
 }
@@ -240,6 +255,7 @@ async function handleSubmit() {
     startDate: model.startDate,
     endDate: model.endDate,
     manager: model.manager,
+    constructionUnit: model.constructionUnit,
     description: model.description
   };
 

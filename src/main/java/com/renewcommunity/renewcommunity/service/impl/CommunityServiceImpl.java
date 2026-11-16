@@ -7,8 +7,10 @@ import com.renewcommunity.renewcommunity.common.api.ResultCode;
 import com.renewcommunity.renewcommunity.common.exception.BusinessException;
 import com.renewcommunity.renewcommunity.entity.SysCommunity;
 import com.renewcommunity.renewcommunity.entity.SysProject;
+import com.renewcommunity.renewcommunity.entity.SysUser;
 import com.renewcommunity.renewcommunity.mapper.SysCommunityMapper;
 import com.renewcommunity.renewcommunity.mapper.SysProjectMapper;
+import com.renewcommunity.renewcommunity.mapper.SysUserMapper;
 import com.renewcommunity.renewcommunity.model.dto.CommunitySaveRequest;
 import com.renewcommunity.renewcommunity.model.vo.CommunityVO;
 import com.renewcommunity.renewcommunity.service.CommunityService;
@@ -28,6 +30,8 @@ public class CommunityServiceImpl implements CommunityService {
     private final SysCommunityMapper communityMapper;
 
     private final SysProjectMapper projectMapper;
+
+    private final SysUserMapper userMapper;
 
     @Override
     public PageResult<CommunityVO> listCommunities(String keyword, Integer status, int pageNum, int pageSize) {
@@ -103,6 +107,12 @@ public class CommunityServiceImpl implements CommunityService {
                 .eq(SysProject::getCommunity, community.getName()));
         if (projectCount > 0) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "该小区下存在改造项目，无法删除");
+        }
+
+        long residentCount = userMapper.selectCount(Wrappers.<SysUser>lambdaQuery()
+                .eq(SysUser::getCommunityId, id));
+        if (residentCount > 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "该小区已绑定居民用户，无法删除");
         }
 
         communityMapper.deleteById(id);

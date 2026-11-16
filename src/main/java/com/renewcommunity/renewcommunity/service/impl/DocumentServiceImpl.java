@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,7 +83,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .toList());
 
         List<DocumentVO> list = records.stream()
-                .map(item -> toVO(item, files.get(item.getFileId()), projectNames.get(item.getProjectId())))
+                .map(item -> toVO(item, files.get(item.getFileId()),
+                        item.getProjectId() == null ? null : projectNames.get(item.getProjectId())))
                 .toList();
 
         return new PageResult<>(result.getTotal(), list);
@@ -164,7 +166,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     private Map<Long, SysFile> idMap(Collection<Long> fileIds) {
         if (fileIds.isEmpty()) {
-            return Map.of();
+            return Collections.emptyMap();
         }
 
         return fileMapper.selectBatchIds(fileIds).stream()
@@ -173,7 +175,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     private Map<Long, String> projectNameMap(Collection<Long> projectIds) {
         if (projectIds.isEmpty()) {
-            return Map.of();
+            return Collections.emptyMap();
         }
 
         return projectMapper.selectBatchIds(projectIds).stream()

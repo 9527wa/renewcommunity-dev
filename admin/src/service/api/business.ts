@@ -194,3 +194,148 @@ export async function downloadDocument(id: number, fileName?: string | null) {
   link.remove();
   window.URL.revokeObjectURL(blobUrl);
 }
+
+/** get progress list */
+export function fetchGetProgressList(params: Api.Business.ProgressSearchParams) {
+  return request<Api.Business.ProgressList>({
+    url: '/api/progress/list',
+    method: 'get',
+    params
+  });
+}
+
+/** create progress record with site images */
+export function fetchCreateProgress(data: FormData) {
+  return request<number>({ url: '/api/progress', method: 'post', data });
+}
+
+/** update progress metadata */
+export function fetchUpdateProgress(id: number, data: Api.Business.ProgressUpdateParams) {
+  return request<void>({ url: `/api/progress/${id}`, method: 'put', data });
+}
+
+/** append site images to progress */
+export function fetchAddProgressImages(id: number, data: FormData) {
+  return request<void>({ url: `/api/progress/${id}/images`, method: 'post', data });
+}
+
+/** delete progress record */
+export function fetchDeleteProgress(id: number) {
+  return request<void>({ url: `/api/progress/${id}`, method: 'delete' });
+}
+
+/** get acceptance list */
+export function fetchGetAcceptanceList(params: Api.Business.AcceptanceSearchParams) {
+  return request<Api.Business.AcceptanceList>({
+    url: '/api/acceptance/list',
+    method: 'get',
+    params
+  });
+}
+
+/** create acceptance record with attachments */
+export function fetchCreateAcceptance(data: FormData) {
+  return request<number>({ url: '/api/acceptance', method: 'post', data });
+}
+
+/** update acceptance metadata */
+export function fetchUpdateAcceptance(id: number, data: Api.Business.AcceptanceUpdateParams) {
+  return request<void>({ url: `/api/acceptance/${id}`, method: 'put', data });
+}
+
+/** delete acceptance record */
+export function fetchDeleteAcceptance(id: number) {
+  return request<void>({ url: `/api/acceptance/${id}`, method: 'delete' });
+}
+
+/** fetch a stored file as a blob object url (for preview) */
+export async function fetchFileObjectUrl(fileId: number) {
+  const blob = await fetchFileBlob(fileId);
+
+  return window.URL.createObjectURL(blob);
+}
+
+/** download a stored file */
+export async function downloadSystemFile(fileId: number, fileName?: string | null) {
+  const blob = await fetchFileBlob(fileId);
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = fileName || 'download';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+async function fetchFileBlob(fileId: number) {
+  const isHttpProxy = import.meta.env.DEV && import.meta.env.VITE_HTTP_PROXY === 'Y';
+  const { baseURL } = getServiceBaseURL(import.meta.env, isHttpProxy);
+  const response = await axios.get(`${baseURL}/api/file/${fileId}/download`, {
+    responseType: 'blob',
+    headers: { [TOKEN_HEADER]: getToken() }
+  });
+
+  return response.data as Blob;
+}
+
+/** get satisfaction list */
+export function fetchGetSatisfactionList(params: Api.Business.SatisfactionSearchParams) {
+  return request<Api.Business.SatisfactionList>({
+    url: '/api/satisfaction/list',
+    method: 'get',
+    params
+  });
+}
+
+/** get satisfaction stats */
+export function fetchGetSatisfactionStats() {
+  return request<Api.Business.SatisfactionStats>({ url: '/api/satisfaction/stats' });
+}
+
+/** get resident list */
+export function fetchGetResidentList(params: Api.Business.ResidentSearchParams) {
+  return request<Api.Business.ResidentList>({
+    url: '/api/resident/list',
+    method: 'get',
+    params
+  });
+}
+
+/** bind resident to community */
+export function fetchBindResidentCommunity(id: number, communityId: number) {
+  return request<void>({ url: `/api/resident/${id}/community`, method: 'put', data: { communityId } });
+}
+
+/** get resident binding history */
+export function fetchGetResidentBindings(id: number) {
+  return request<Api.Business.CommunityBinding[]>({ url: `/api/resident/${id}/bindings` });
+}
+
+/** get statistics overview */
+export function fetchGetStatisticsOverview() {
+  return request<Api.Business.Statistics>({ url: '/api/statistics/overview' });
+}
+
+/** get stored file list */
+export function fetchGetFileList(params: Api.Business.FileSearchParams) {
+  return request<Api.Business.FileList>({
+    url: '/api/file/list',
+    method: 'get',
+    params
+  });
+}
+
+/** delete stored file */
+export function fetchDeleteFileRecord(id: number) {
+  return request<void>({ url: `/api/file/${id}`, method: 'delete' });
+}
+
+/** get operation log list */
+export function fetchGetOperationLogList(params: Api.Business.OperationLogSearchParams) {
+  return request<Api.Business.OperationLogList>({
+    url: '/api/system/log/list',
+    method: 'get',
+    params
+  });
+}
